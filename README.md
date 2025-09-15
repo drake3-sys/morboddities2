@@ -13,11 +13,15 @@ npm run build
 npm run preview
 ```
 
-## Deploy (Vercel)
-1. Push this folder to GitHub
-2. Import repo in Vercel → Deploy
-3. Add your domain in Vercel and update DNS in GoDaddy
+## Features
+- Shop grid with cart
+- Adoption Hall with printable certificates
+- Lore sections (collapsible)
+- Smooth-scroll nav + hero buttons
+- Floating “Back to top” button
 
-## Notes
-- Replace mock products/monsters with live data (Shopify/Medusa/Woo).
-- Adoption generates a printable certificate in a new tab.
+## Deploy (Vercel + GoDaddy domain)
+1. Push this folder to GitHub (GitHub Desktop → Publish)
+2. Import repo in Vercel → Deploy
+3. In Vercel: add your domain `morboddities.com`
+4. In GoDaddy DNS: add the Vercel records

@@ -1,15 +1,19 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 
-type Product = { id: string; title: string; price: number; image?: string; tagline?: string };
-type CartLine = { product: Product; qty: number };
-type Monster = {
+// Morboddities — Store, Lore & Adoption Hall (Nav wired + Back-to-top)
+
+// ---------- Types
+ type Product = { id: string; title: string; price: number; image?: string; tagline?: string };
+ type CartLine = { product: Product; qty: number };
+ type Monster = {
   id: string; name: string; price: number;
   rarity: "Common" | "Uncommon" | "Rare" | "Mythic";
   temperament: string; origin: string; traits: string[];
   blessing?: string; curse?: string; oath: string; lore: string;
   photo?: string; adopted?: boolean;
-};
+ };
 
+// ---------- Mock Data
 const PRODUCTS: Product[] = [
   { id: "skull-cameo-ring", title: "Skull Cameo Ring", price: 69, tagline: "Victorian memento mori, 925 silver." },
   { id: "crow-feather-quill", title: "Crow Feather Quill", price: 29, tagline: "For contracts you *must* keep." },
@@ -24,6 +28,7 @@ const MONSTERS: Monster[] = [
   { id: "gloompuff-077", name: "Gloompuff", price: 35, rarity: "Common", temperament: "shy, easily startled", origin: "condensed from candle smoke during a midnight draft", traits: ["squeaks at meteor showers","warms palms"], blessing: "Tea tastes 3% better when it sits nearby.", oath: "Never blow out all candles at once in its presence.", lore: "Gloompuff prefers bookshelves and will guard dog-eared pages like a dragon guards gold." },
 ];
 
+// ---------- Helpers & UI bits
 const asUSD = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
 const GlassCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ className = "", children }) => (
@@ -60,12 +65,29 @@ const Logo = () => (
   </div>
 );
 
+// ---------- App
 export default function App() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [query, setQuery] = useState("");
   const [showCart, setShowCart] = useState(false);
   const [monsters, setMonsters] = useState<Monster[]>(MONSTERS);
   const [activeMonster, setActiveMonster] = useState<Monster | null>(null);
+
+  // Smooth-scroll helpers & section refs
+  const shopRef = useRef<HTMLElement | null>(null);
+  const adoptionRef = useRef<HTMLElement | null>(null);
+  const loreRef = useRef<HTMLElement | null>(null);
+  const newsletterRef = useRef<HTMLElement | null>(null);
+  const scrollToRef = (ref: React.RefObject<HTMLElement>) => ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // Back-to-top visibility
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -114,14 +136,15 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black text-zinc-100">
+      {/* Top Nav */}
       <header className="sticky top-0 z-50 border-b border-white/10 backdrop-blur bg-black/40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
           <Logo />
           <div className="hidden md:flex items-center gap-6 text-sm opacity-90">
-            <a href="#shop" className="hover:opacity-100 transition">Shop</a>
-            <a href="#adoption" className="hover:opacity-100 transition">Adoption Hall</a>
-            <a href="#lore" className="hover:opacity-100 transition">Lore</a>
-            <a href="#newsletter" className="hover:opacity-100 transition">Ledger</a>
+            <button onClick={() => scrollToRef(shopRef)} className="hover:opacity-100 transition">Shop</button>
+            <button onClick={() => scrollToRef(adoptionRef)} className="hover:opacity-100 transition">Adoption Hall</button>
+            <button onClick={() => scrollToRef(loreRef)} className="hover:opacity-100 transition">Lore</button>
+            <button onClick={() => scrollToRef(newsletterRef)} className="hover:opacity-100 transition">Ledger</button>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="relative">
@@ -140,14 +163,14 @@ export default function App() {
           <h1 className="text-4xl md:text-6xl font-serif tracking-wide">MORBODDITIES</h1>
           <p className="mt-4 text-zinc-300 max-w-2xl mx-auto">A digital wunderkammer of gothic curios, occult utilities, and handcrafted familiars.</p>
           <div className="mt-8 flex items-center justify-center gap-3">
-            <a href="#shop"><SolidButton>Enter the Cabinet</SolidButton></a>
-            <a href="#adoption"><GhostButton>Adopt a Familiar</GhostButton></a>
+            <SolidButton onClick={() => scrollToRef(shopRef)}>Enter the Cabinet</SolidButton>
+            <GhostButton onClick={() => { scrollToRef(adoptionRef); const first = monsters.find(m => !m.adopted); if (first) setTimeout(() => setActiveMonster(first), 500); }}>Adopt a Familiar</GhostButton>
           </div>
         </div>
       </section>
 
       {/* Shop */}
-      <section id="shop" className="max-w-6xl mx-auto px-4 py-10 md:py-16">
+      <section id="shop" ref={shopRef} className="scroll-mt-24 max-w-6xl mx-auto px-4 py-10 md:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-serif">The Cabinet</h2>
           <p className="text-sm text-zinc-400">{filtered.length} item{filtered.length===1?"":"s"} found</p>
@@ -174,7 +197,7 @@ export default function App() {
       </section>
 
       {/* Adoption Hall */}
-      <section id="adoption" className="max-w-6xl mx-auto px-4 py-10 md:py-16">
+      <section id="adoption" ref={adoptionRef} className="scroll-mt-24 max-w-6xl mx-auto px-4 py-10 md:py-16">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl md:text-3xl font-serif">Adoption Hall</h2>
           <p className="text-sm text-zinc-400">{monsters.filter(m=>!m.adopted).length} available</p>
@@ -200,13 +223,13 @@ export default function App() {
           ))}
         </div>
 
+        {/* Book of Keepers */}
         <div className="mt-10">
           <h3 className="font-serif text-xl">The Book of Keepers</h3>
           <p className="text-sm text-zinc-400">A ledger of familiars and their fates. (Public wall optional.)</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-400">
             {monsters.filter(m=>m.adopted).length===0 ? <span>No entries yet. The page waits.</span> :
-              monsters.filter(m=>m.adopted).map(m => (<span key={m.id} className="px-3 py-1 rounded-full border border-white/10">{m.name} — Adopted</span>))
-            }
+              monsters.filter(m=>m.adopted).map(m => (<span key={m.id} className="px-3 py-1 rounded-full border border-white/10">{m.name} — Adopted</span>))}
           </div>
         </div>
       </section>
@@ -246,7 +269,7 @@ export default function App() {
       )}
 
       {/* Lore */}
-      <section id="lore" className="max-w-5xl mx-auto px-4 py-16">
+      <section id="lore" ref={loreRef} className="scroll-mt-24 max-w-5xl mx-auto px-4 py-16">
         <h2 className="text-2xl md:text-3xl font-serif mb-6">Lore & Provenance</h2>
         <div className="space-y-4">
           <LoreBlock title="The Ledger" teaser="Before there was a store, there was a book bound in night-black vellum.">
@@ -262,7 +285,7 @@ export default function App() {
       </section>
 
       {/* Newsletter */}
-      <section id="newsletter" className="max-w-5xl mx-auto px-4 pb-24">
+      <section id="newsletter" ref={newsletterRef} className="scroll-mt-24 max-w-5xl mx-auto px-4 pb-24">
         <GlassCard className="p-6 md:p-8">
           <div className="md:flex items-center gap-8">
             <div className="md:w-2/3">
@@ -276,6 +299,17 @@ export default function App() {
           </div>
         </GlassCard>
       </section>
+
+      {/* Back to Top */}
+      {showTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 z-50 px-3 py-2 rounded-xl border border-white/20 bg-white/5 backdrop-blur hover:border-white/40"
+          aria-label="Back to top"
+        >
+          ↑ Top
+        </button>
+      )}
 
       {/* Cart Drawer */}
       {showCart && (
@@ -328,6 +362,7 @@ export default function App() {
   );
 }
 
+// ---------- Small bits
 const LoreBlock: React.FC<{ title: string; teaser: string; children: React.ReactNode }> = ({ title, teaser, children }) => {
   const [open, setOpen] = useState(false);
   return (
